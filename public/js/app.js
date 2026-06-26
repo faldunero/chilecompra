@@ -53,13 +53,13 @@ function actualizarUrlPreview() {
   let path = "";
   if (currentTab === "fecha") {
     const fecha = document.getElementById("input-fecha").value || "YYYY-MM-DD";
-    path = `/api/licitaciones/fecha?fecha=${fecha}`;
+    path = `/api/licitaciones-fecha?fecha=${fecha}`;
   } else if (currentTab === "organismo") {
     const cod = document.getElementById("input-org").value || "{codigo}";
-    path = `/api/licitaciones/organismo?codigo=${cod}`;
+    path = `/api/licitaciones-organismo?codigo=${cod}`;
   } else {
     const cod = document.getElementById("input-cod").value || "{codigo}";
-    path = `/api/licitaciones/codigo?codigo=${cod}`;
+    path = `/api/licitaciones-codigo?codigo=${cod}`;
   }
   if (ticket) path += `&ticket=***`;
   document.getElementById("url-preview").textContent = `GET ${path}`;
@@ -81,15 +81,15 @@ async function buscar() {
     if (currentTab === "fecha") {
       const fecha = document.getElementById("input-fecha").value;
       if (!fecha) throw new Error("Selecciona una fecha.");
-      url = `/api/licitaciones/fecha?fecha=${fecha}`;
+      url = `/api/licitaciones-fecha?fecha=${fecha}`;
     } else if (currentTab === "organismo") {
       const cod = document.getElementById("input-org").value.trim();
       if (!cod) throw new Error("Ingresa un código de organismo.");
-      url = `/api/licitaciones/organismo?codigo=${encodeURIComponent(cod)}`;
+      url = `/api/licitaciones-organismo?codigo=${encodeURIComponent(cod)}`;
     } else {
       const cod = document.getElementById("input-cod").value.trim();
       if (!cod) throw new Error("Ingresa un código de licitación.");
-      url = `/api/licitaciones/codigo?codigo=${encodeURIComponent(cod)}`;
+      url = `/api/licitaciones-codigo?codigo=${encodeURIComponent(cod)}`;
     }
 
     const res = await fetch(url, { headers });

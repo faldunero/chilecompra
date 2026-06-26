@@ -1,0 +1,8 @@
+{
+  "name": "chilecompra-shellti",
+  "version": "1.0.0",
+  "description": "Explorador ChileCompra — ShellTI",
+  "dependencies": {
+    "axios": "^1.7.2"
+  }
+}

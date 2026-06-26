@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShellTI — Explorador ChileCompra</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <img src="logo_shellti.webp" alt="ShellTI" class="header-logo" />
+        <div class="header-brand-text">
+          <span class="brand-name">Shell<span class="brand-ti">TI</span></span>
+          <span class="brand-sub">Explorador Mercado Público</span>
+        </div>
+      </div>
+      <div class="header-status" id="health-badge">
+        <span class="dot dot-gray"></span>
+        <span>Conectando…</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main">
+
+    <aside class="sidebar">
+      <section class="panel">
+        <h2 class="panel-title">Parámetros de búsqueda</h2>
+
+        <div class="tabs">
+          <button class="tab active" data-tab="fecha">Por fecha</button>
+          <button class="tab" data-tab="organismo">Por organismo</button>
+          <button class="tab" data-tab="codigo">Por código</button>
+        </div>
+
+        <div class="tab-panel active" id="panel-fecha">
+          <label class="field-label" for="input-fecha">Fecha</label>
+          <input type="date" id="input-fecha" class="field-input" />
+        </div>
+
+        <div class="tab-panel" id="panel-organismo">
+          <label class="field-label" for="input-org">Código de organismo</label>
+          <input type="text" id="input-org" class="field-input" placeholder="Ej: 89100" />
+        </div>
+
+        <div class="tab-panel" id="panel-codigo">
+          <label class="field-label" for="input-cod">Código de licitación</label>
+          <input type="text" id="input-cod" class="field-input" placeholder="Ej: 2345-1-LE26" />
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="input-ticket">
+            Ticket API
+            <span class="hint">(opcional si está en .env)</span>
+          </label>
+          <input type="password" id="input-ticket" class="field-input" placeholder="Tu token de ChileCompra" />
+        </div>
+
+        <button class="btn-primary" id="btn-buscar">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M10.5 10.5L13 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Buscar licitaciones
+        </button>
+
+        <div class="url-preview" id="url-preview">/api/licitaciones/fecha?fecha=…</div>
+      </section>
+
+      <section class="panel stats-panel" id="stats-panel" hidden>
+        <h2 class="panel-title">Resumen</h2>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-total">—</div>
+            <div class="stat-label">Total</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-publicadas">—</div>
+            <div class="stat-label">Publicadas</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-organismos">—</div>
+            <div class="stat-label">Organismos</div>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <section class="content">
+      <div class="content-toolbar" id="toolbar" hidden>
+        <input type="text" class="search-input" id="filter-input" placeholder="Filtrar por nombre, código u organismo…" />
+        <select class="field-input select-estado" id="filter-estado">
+          <option value="">Todos los estados</option>
+          <option value="publicada">Publicada</option>
+          <option value="cerrada">Cerrada</option>
+          <option value="adjudicada">Adjudicada</option>
+        </select>
+      </div>
+
+      <div class="demo-banner" id="demo-banner" hidden>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M7 4v3.5L9 9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        Modo demo — datos ficticios. Agrega tu ticket para consultar licitaciones reales.
+      </div>
+
+      <div id="results-container">
+        <div class="empty-state">
+          <div class="empty-wolf">
+            <img src="logo_shellti.webp" alt="" aria-hidden="true" />
+          </div>
+          <p class="empty-title">Sistema listo</p>
+          <p class="empty-sub">Configura los parámetros y ejecuta una búsqueda</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

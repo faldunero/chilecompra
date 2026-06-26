@@ -2,7 +2,7 @@
   "name": "chilecompra-shellti",
   "version": "1.0.0",
   "description": "Explorador ChileCompra — ShellTI",
-  "engines": { "node": "18.x" },
+  "engines": { "node": "24.x" },
   "dependencies": {
     "axios": "^1.7.2"
   }

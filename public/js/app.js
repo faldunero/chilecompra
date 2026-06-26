@@ -1,12 +1,15 @@
 let allResults = [];
 let currentTab = "fecha";
+const edicionParams = { tipo: "", estado: "", keyword: "", region: "" };
 
 document.addEventListener("DOMContentLoaded", () => {
   const today = new Date().toISOString().split("T")[0];
-  document.getElementById("input-fecha").value = today;
+  document.getElementById("input-fecha-desde").value = today;
+  document.getElementById("input-fecha-hasta").value = today;
 
   checkHealth();
 
+  // Tabs búsqueda
   document.querySelectorAll(".tab").forEach((btn) => {
     btn.addEventListener("click", () => switchTab(btn.dataset.tab));
   });
@@ -14,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-buscar").addEventListener("click", buscar);
   document.getElementById("btn-analizar").addEventListener("click", analizar);
 
-  ["input-fecha", "input-org", "input-cod", "input-ticket"].forEach((id) => {
+  ["input-fecha-desde", "input-fecha-hasta", "input-org", "input-cod"].forEach((id) => {
     document.getElementById(id)?.addEventListener("keydown", (e) => {
       if (e.key === "Enter") buscar();
     });
@@ -23,49 +26,82 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("filter-input").addEventListener("input", aplicarFiltros);
   document.getElementById("filter-estado").addEventListener("change", aplicarFiltros);
 
-  ["input-fecha", "input-org", "input-cod", "input-ticket"].forEach((id) => {
-    document.getElementById(id)?.addEventListener("input", actualizarUrlPreview);
+  // ── Barra Edición ──
+  document.querySelectorAll(".edicion-section-toggle").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const targetId = btn.dataset.target;
+      const body = document.getElementById(targetId);
+      const expanded = btn.getAttribute("aria-expanded") === "true";
+      // Cerrar todas las demás
+      document.querySelectorAll(".edicion-section-toggle").forEach((b) => {
+        if (b !== btn) {
+          b.setAttribute("aria-expanded", "false");
+          const t = document.getElementById(b.dataset.target);
+          if (t) t.hidden = true;
+        }
+      });
+      btn.setAttribute("aria-expanded", String(!expanded));
+      body.hidden = expanded;
+    });
   });
 
-  actualizarUrlPreview();
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".edicion-section")) {
+      document.querySelectorAll(".edicion-section-toggle").forEach((b) => {
+        b.setAttribute("aria-expanded", "false");
+        const t = document.getElementById(b.dataset.target);
+        if (t) t.hidden = true;
+      });
+    }
+  });
+
+  document.getElementById("ep-apply")?.addEventListener("click", () => {
+    edicionParams.tipo    = document.getElementById("ep-tipo").value;
+    edicionParams.estado  = document.getElementById("ep-estado").value;
+    edicionParams.keyword = document.getElementById("ep-keyword").value.trim().toLowerCase();
+    edicionParams.region  = document.getElementById("ep-region").value;
+    actualizarIndicadorEdicion();
+    if (allResults.Listado) aplicarFiltros();
+    document.querySelectorAll(".edicion-section-toggle").forEach((b) => {
+      b.setAttribute("aria-expanded", "false");
+      const t = document.getElementById(b.dataset.target);
+      if (t) t.hidden = true;
+    });
+  });
+
+  document.getElementById("ep-clear")?.addEventListener("click", () => {
+    document.getElementById("ep-tipo").value = "";
+    document.getElementById("ep-estado").value = "";
+    document.getElementById("ep-keyword").value = "";
+    document.getElementById("ep-region").value = "";
+    edicionParams.tipo = edicionParams.estado = edicionParams.keyword = edicionParams.region = "";
+    actualizarIndicadorEdicion();
+    if (allResults.Listado) aplicarFiltros();
+  });
 });
 
+// ── Health ──
 async function checkHealth() {
   const badge = document.getElementById("health-badge");
   try {
     const res = await fetch("/api/health");
     if (res.ok) {
-      badge.innerHTML = `<span class="dot dot-green"></span><span>Backend activo</span>`;
+      badge.innerHTML = `<span class="dot dot-green"></span><span>Sistema activo</span>`;
     } else throw new Error();
   } catch {
-    badge.innerHTML = `<span class="dot dot-red"></span><span>Sin conexión</span>`;
+    badge.innerHTML = `<span class="dot dot-red"></span><span>Sistema sin conexión</span>`;
   }
 }
 
+// ── Tabs ──
 function switchTab(tab) {
   currentTab = tab;
   document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
   document.querySelectorAll(".tab-panel").forEach((p) => p.classList.toggle("active", p.id === `panel-${tab}`));
-  actualizarUrlPreview();
 }
 
-function actualizarUrlPreview() {
-  const ticket = document.getElementById("input-ticket").value.trim();
-  let path = "";
-  if (currentTab === "fecha") {
-    const fecha = document.getElementById("input-fecha").value || "YYYY-MM-DD";
-    path = `/api/licitaciones-fecha?fecha=${fecha}`;
-  } else if (currentTab === "organismo") {
-    const cod = document.getElementById("input-org").value || "{codigo}";
-    path = `/api/licitaciones-organismo?codigo=${cod}`;
-  } else {
-    const cod = document.getElementById("input-cod").value || "{codigo}";
-    path = `/api/licitaciones-codigo?codigo=${cod}`;
-  }
-  if (ticket) path += `&ticket=***`;
-  document.getElementById("url-preview").textContent = `GET ${path}`;
-}
-
+// ── Buscar ──
 async function buscar() {
   const btn = document.getElementById("btn-buscar");
   btn.disabled = true;
@@ -73,15 +109,13 @@ async function buscar() {
   mostrarCargando();
 
   try {
-    const ticket = document.getElementById("input-ticket").value.trim();
-    const headers = {};
-    if (ticket) headers["x-chilecompra-ticket"] = ticket;
-
     let url = "";
     if (currentTab === "fecha") {
-      const fecha = document.getElementById("input-fecha").value;
-      if (!fecha) throw new Error("Selecciona una fecha.");
-      url = `/api/licitaciones-fecha?fecha=${fecha}`;
+      const desde = document.getElementById("input-fecha-desde").value;
+      const hasta = document.getElementById("input-fecha-hasta").value;
+      if (!desde) throw new Error("Selecciona una fecha de inicio.");
+      url = `/api/licitaciones-fecha?fecha=${desde}`;
+      if (hasta && hasta !== desde) url += `&hasta=${hasta}`;
     } else if (currentTab === "organismo") {
       const cod = document.getElementById("input-org").value.trim();
       if (!cod) throw new Error("Ingresa un código de organismo.");
@@ -92,7 +126,7 @@ async function buscar() {
       url = `/api/licitaciones-codigo?codigo=${encodeURIComponent(cod)}`;
     }
 
-    const res = await fetch(url, { headers });
+    const res = await fetch(url);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
 
@@ -118,6 +152,7 @@ async function buscar() {
   }
 }
 
+// ── Analizar IA ──
 async function analizar() {
   if (!allResults.Listado || !allResults.Listado.length) return;
 
@@ -139,7 +174,6 @@ async function analizar() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
-
     aiContent.innerHTML = `<div class="ai-text">${formatAnalysis(data.analysis)}</div>
       <div class="ai-footer">Análisis de ${data.total} licitaciones · Powered by Groq + Llama 3.3 70B</div>`;
   } catch (err) {
@@ -159,22 +193,28 @@ function formatAnalysis(text) {
     .replace(/$/, "</p>");
 }
 
+// ── Filtros ──
 function aplicarFiltros() {
-  if (Object.values(edicionParams).some(Boolean)) { aplicarFiltrosEdicion(); return; }
   if (!allResults.Listado) return;
   const query = document.getElementById("filter-input").value.toLowerCase();
-  const estadoFiltro = document.getElementById("filter-estado").value.toLowerCase();
+  const estadoToolbar = document.getElementById("filter-estado").value.toLowerCase();
+
   const filtradas = allResults.Listado.filter((l) => {
     const matchQuery = !query ||
       (l.Nombre || "").toLowerCase().includes(query) ||
       (l.CodigoExterno || "").toLowerCase().includes(query) ||
       (l.Organismo?.NombreOrganismo || "").toLowerCase().includes(query);
-    const matchEstado = !estadoFiltro || (l.Estado || "").toLowerCase().includes(estadoFiltro);
-    return matchQuery && matchEstado;
+    const matchEstadoToolbar = !estadoToolbar || (l.Estado || "").toLowerCase().includes(estadoToolbar);
+    const matchTipo    = !edicionParams.tipo    || (l.CodigoExterno || "").includes(edicionParams.tipo);
+    const matchEstado  = !edicionParams.estado  || (l.Estado || "").toLowerCase().includes(edicionParams.estado);
+    const matchKeyword = !edicionParams.keyword || (l.Nombre || "").toLowerCase().includes(edicionParams.keyword);
+    const matchRegion  = !edicionParams.region  || String(l.Organismo?.Region || "") === edicionParams.region;
+    return matchQuery && matchEstadoToolbar && matchTipo && matchEstado && matchKeyword && matchRegion;
   });
   renderLicitaciones(filtradas);
 }
 
+// ── Stats ──
 function renderStats(data) {
   const list = data.Listado || [];
   document.getElementById("stat-total").textContent = data.Cantidad ?? list.length;
@@ -184,6 +224,7 @@ function renderStats(data) {
   document.getElementById("stat-organismos").textContent = orgs.size;
 }
 
+// ── Render cards ──
 function renderLicitaciones(list) {
   const container = document.getElementById("results-container");
   if (!list || list.length === 0) {
@@ -257,77 +298,7 @@ function iconTag() {
   return `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 2h4l5 5-4 4-5-5V2z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><circle cx="4" cy="4" r="0.75" fill="currentColor"/></svg>`;
 }
 
-/* ══════════════════════════════════════
-   BARRA EDICIÓN — lógica de UI
-══════════════════════════════════════ */
-
-// Estado de parámetros activos
-const edicionParams = { tipo: "", estado: "", keyword: "", region: "" };
-
-document.addEventListener("DOMContentLoaded", () => {
-  // Toggles de secciones colapsables
-  document.querySelectorAll(".edicion-section-toggle").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const targetId = btn.dataset.target;
-      const body = document.getElementById(targetId);
-      const expanded = btn.getAttribute("aria-expanded") === "true";
-      // Cerrar todas las demás
-      document.querySelectorAll(".edicion-section-toggle").forEach((b) => {
-        if (b !== btn) {
-          b.setAttribute("aria-expanded", "false");
-          const t = document.getElementById(b.dataset.target);
-          if (t) t.hidden = true;
-        }
-      });
-      btn.setAttribute("aria-expanded", String(!expanded));
-      body.hidden = expanded;
-    });
-  });
-
-  // Cerrar dropdown al hacer click fuera
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest(".edicion-section")) {
-      document.querySelectorAll(".edicion-section-toggle").forEach((b) => {
-        b.setAttribute("aria-expanded", "false");
-        const t = document.getElementById(b.dataset.target);
-        if (t) t.hidden = true;
-      });
-    }
-  });
-
-  // Aplicar parámetros
-  document.getElementById("ep-apply")?.addEventListener("click", () => {
-    edicionParams.tipo    = document.getElementById("ep-tipo").value;
-    edicionParams.estado  = document.getElementById("ep-estado").value;
-    edicionParams.keyword = document.getElementById("ep-keyword").value.trim().toLowerCase();
-    edicionParams.region  = document.getElementById("ep-region").value;
-
-    // Indicador visual en el botón toggle
-    actualizarIndicadorEdicion();
-
-    // Si hay resultados, re-filtrar
-    if (allResults.Listado) aplicarFiltrosEdicion();
-
-    // Cerrar el dropdown
-    document.querySelectorAll(".edicion-section-toggle").forEach((b) => {
-      b.setAttribute("aria-expanded", "false");
-      const t = document.getElementById(b.dataset.target);
-      if (t) t.hidden = true;
-    });
-  });
-
-  // Limpiar parámetros
-  document.getElementById("ep-clear")?.addEventListener("click", () => {
-    document.getElementById("ep-tipo").value = "";
-    document.getElementById("ep-estado").value = "";
-    document.getElementById("ep-keyword").value = "";
-    document.getElementById("ep-region").value = "";
-    edicionParams.tipo = edicionParams.estado = edicionParams.keyword = edicionParams.region = "";
-    actualizarIndicadorEdicion();
-    if (allResults.Listado) aplicarFiltrosEdicion();
-  });
-});
-
+// ── Edición indicator ──
 function actualizarIndicadorEdicion() {
   const toggle = document.querySelector("[data-target='esec-params-body']");
   if (!toggle) return;
@@ -340,28 +311,4 @@ function actualizarIndicadorEdicion() {
   } else if (!hayFiltros && dotExistente) {
     dotExistente.remove();
   }
-}
-
-function aplicarFiltrosEdicion() {
-  if (!allResults.Listado) return;
-  const query = document.getElementById("filter-input").value.toLowerCase();
-  const estadoToolbar = document.getElementById("filter-estado").value.toLowerCase();
-
-  const filtradas = allResults.Listado.filter((l) => {
-    // Filtros toolbar existentes
-    const matchQuery = !query ||
-      (l.Nombre || "").toLowerCase().includes(query) ||
-      (l.CodigoExterno || "").toLowerCase().includes(query) ||
-      (l.Organismo?.NombreOrganismo || "").toLowerCase().includes(query);
-    const matchEstadoToolbar = !estadoToolbar || (l.Estado || "").toLowerCase().includes(estadoToolbar);
-
-    // Filtros barra edición
-    const matchTipo    = !edicionParams.tipo    || (l.CodigoExterno || "").includes(edicionParams.tipo);
-    const matchEstado  = !edicionParams.estado  || (l.Estado || "").toLowerCase().includes(edicionParams.estado);
-    const matchKeyword = !edicionParams.keyword || (l.Nombre || "").toLowerCase().includes(edicionParams.keyword);
-    const matchRegion  = !edicionParams.region  || String(l.Organismo?.Region || "") === edicionParams.region;
-
-    return matchQuery && matchEstadoToolbar && matchTipo && matchEstado && matchKeyword && matchRegion;
-  });
-  renderLicitaciones(filtradas);
 }

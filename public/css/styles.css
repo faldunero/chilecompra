@@ -269,7 +269,24 @@ body {
 }
 .error-box strong { display: block; margin-bottom: 2px; font-family: var(--font-title); }
 
-@media (max-width: 768px) { .app-main { grid-template-columns: 1fr; } }
+/* ── Date range ── */
+.date-range-group {
+  display: flex; align-items: flex-end; gap: 8px;
+}
+.date-range-field { flex: 1; }
+.date-range-separator {
+  font-family: var(--font-mono); font-size: 13px;
+  color: var(--silver-muted); padding-bottom: 10px;
+  flex-shrink: 0;
+}
+input[type="date"].field-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.5) sepia(1) saturate(3) hue-rotate(160deg);
+  cursor: pointer; opacity: 0.6;
+}
+input[type="date"].field-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
 
 /* ── Botón IA ── */
 .btn-ai {

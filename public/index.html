@@ -22,7 +22,7 @@
       </div>
       <div class="header-status" id="health-badge">
         <span class="dot dot-gray"></span>
-        <span>Conectando…</span>
+        <span>Sistema…</span>
       </div>
     </div>
   </header>
@@ -40,8 +40,17 @@
         </div>
 
         <div class="tab-panel active" id="panel-fecha">
-          <label class="field-label" for="input-fecha">Fecha</label>
-          <input type="date" id="input-fecha" class="field-input" />
+          <div class="date-range-group">
+            <div class="date-range-field">
+              <label class="field-label" for="input-fecha-desde">Desde</label>
+              <input type="date" id="input-fecha-desde" class="field-input" />
+            </div>
+            <div class="date-range-separator">→</div>
+            <div class="date-range-field">
+              <label class="field-label" for="input-fecha-hasta">Hasta</label>
+              <input type="date" id="input-fecha-hasta" class="field-input" />
+            </div>
+          </div>
         </div>
         <div class="tab-panel" id="panel-organismo">
           <label class="field-label" for="input-org">Código de organismo</label>
@@ -50,13 +59,6 @@
         <div class="tab-panel" id="panel-codigo">
           <label class="field-label" for="input-cod">Código de licitación</label>
           <input type="text" id="input-cod" class="field-input" placeholder="Ej: 2345-1-LE26" />
-        </div>
-
-        <div class="field-group">
-          <label class="field-label" for="input-ticket">
-            Ticket API <span class="hint">(opcional si está en .env)</span>
-          </label>
-          <input type="password" id="input-ticket" class="field-input" placeholder="Tu token de ChileCompra" />
         </div>
 
         <button class="btn-primary" id="btn-buscar">
@@ -74,7 +76,7 @@
           Analizar con IA
         </button>
 
-        <div class="url-preview" id="url-preview">/api/licitaciones-fecha?fecha=…</div>
+
       </section>
 
       <section class="panel stats-panel" id="stats-panel" hidden>

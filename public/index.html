@@ -43,12 +43,10 @@
           <label class="field-label" for="input-fecha">Fecha</label>
           <input type="date" id="input-fecha" class="field-input" />
         </div>
-
         <div class="tab-panel" id="panel-organismo">
           <label class="field-label" for="input-org">Código de organismo</label>
           <input type="text" id="input-org" class="field-input" placeholder="Ej: 89100" />
         </div>
-
         <div class="tab-panel" id="panel-codigo">
           <label class="field-label" for="input-cod">Código de licitación</label>
           <input type="text" id="input-cod" class="field-input" placeholder="Ej: 2345-1-LE26" />
@@ -56,8 +54,7 @@
 
         <div class="field-group">
           <label class="field-label" for="input-ticket">
-            Ticket API
-            <span class="hint">(opcional si está en .env)</span>
+            Ticket API <span class="hint">(opcional si está en .env)</span>
           </label>
           <input type="password" id="input-ticket" class="field-input" placeholder="Tu token de ChileCompra" />
         </div>
@@ -68,6 +65,13 @@
             <path d="M10.5 10.5L13 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
           Buscar licitaciones
+        </button>
+
+        <button class="btn-ai" id="btn-analizar" hidden>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M8 2l1.5 3 3.5.5-2.5 2.5.5 3.5L8 10l-3 1.5.5-3.5L3 5.5 6.5 5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+          </svg>
+          Analizar con IA
         </button>
 
         <div class="url-preview" id="url-preview">/api/licitaciones-fecha?fecha=…</div>
@@ -109,6 +113,18 @@
           <path d="M7 4v3.5L9 9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
         </svg>
         Modo demo — datos ficticios. Agrega tu ticket para consultar licitaciones reales.
+      </div>
+
+      <!-- Panel IA -->
+      <div class="ai-panel" id="ai-panel" hidden>
+        <div class="ai-panel-header">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M8 2l1.5 3 3.5.5-2.5 2.5.5 3.5L8 10l-3 1.5.5-3.5L3 5.5 6.5 5z" stroke="#a855f7" stroke-width="1.2" stroke-linejoin="round"/>
+          </svg>
+          Análisis IA para ShellTI
+          <span class="ai-badge">Groq · Llama 3.3</span>
+        </div>
+        <div class="ai-content" id="ai-content"></div>
       </div>
 
       <div id="results-container">

@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.getElementById("btn-buscar").addEventListener("click", buscar);
+  document.getElementById("btn-analizar").addEventListener("click", analizar);
 
   ["input-fecha", "input-org", "input-cod", "input-ticket"].forEach((id) => {
     document.getElementById(id)?.addEventListener("keydown", (e) => {
@@ -69,7 +70,6 @@ async function buscar() {
   const btn = document.getElementById("btn-buscar");
   btn.disabled = true;
   btn.innerHTML = `<span class="spinner" style="width:16px;height:16px;border-width:2px;box-shadow:none;"></span> Buscando…`;
-
   mostrarCargando();
 
   try {
@@ -105,14 +105,58 @@ async function buscar() {
 
     document.getElementById("stats-panel").hidden = false;
     document.getElementById("toolbar").hidden = false;
+    document.getElementById("btn-analizar").hidden = false;
+    document.getElementById("ai-panel").hidden = true;
   } catch (err) {
     mostrarError(err.message);
     document.getElementById("stats-panel").hidden = true;
     document.getElementById("toolbar").hidden = true;
+    document.getElementById("btn-analizar").hidden = true;
   } finally {
     btn.disabled = false;
     btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L13 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Buscar licitaciones`;
   }
+}
+
+async function analizar() {
+  if (!allResults.Listado || !allResults.Listado.length) return;
+
+  const btn = document.getElementById("btn-analizar");
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner" style="width:16px;height:16px;border-width:2px;box-shadow:none;border-top-color:#a855f7;"></span> Analizando con IA…`;
+
+  const aiPanel = document.getElementById("ai-panel");
+  const aiContent = document.getElementById("ai-content");
+  aiPanel.hidden = false;
+  aiContent.innerHTML = `<div class="ai-loading"><div class="spinner" style="border-top-color:#a855f7;"></div><span>Groq está analizando ${allResults.Listado.length} licitaciones…</span></div>`;
+  aiPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+  try {
+    const res = await fetch("/api/analizar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ licitaciones: allResults.Listado }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+
+    aiContent.innerHTML = `<div class="ai-text">${formatAnalysis(data.analysis)}</div>
+      <div class="ai-footer">Análisis de ${data.total} licitaciones · Powered by Groq + Llama 3.3 70B</div>`;
+  } catch (err) {
+    aiContent.innerHTML = `<div class="ai-error">⚠️ ${escHtml(err.message)}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2l1.5 3 3.5.5-2.5 2.5.5 3.5L8 10l-3 1.5.5-3.5L3 5.5 6.5 5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg> Analizar con IA`;
+  }
+}
+
+function formatAnalysis(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\n\n/g, "</p><p>")
+    .replace(/\n/g, "<br>")
+    .replace(/^/, "<p>")
+    .replace(/$/, "</p>");
 }
 
 function aplicarFiltros() {
@@ -153,7 +197,6 @@ function renderLicitaciones(list) {
     </div>`;
     return;
   }
-
   const cards = list.map((l) => {
     const badge = getBadgeClass(l.Estado);
     const orgNombre = l.Organismo?.NombreOrganismo || l.Organismo?.CodigoOrganismo || "—";
@@ -173,7 +216,6 @@ function renderLicitaciones(list) {
       </div>
     </div>`;
   });
-
   container.innerHTML = `<div class="lic-list">${cards.join("")}</div>`;
 }
 

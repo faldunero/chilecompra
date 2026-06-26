@@ -270,3 +270,65 @@ body {
 .error-box strong { display: block; margin-bottom: 2px; font-family: var(--font-title); }
 
 @media (max-width: 768px) { .app-main { grid-template-columns: 1fr; } }
+
+/* ── Botón IA ── */
+.btn-ai {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; height: 42px; margin-top: 8px;
+  background: linear-gradient(135deg, rgba(168,85,247,0.15) 0%, rgba(168,85,247,0.05) 100%);
+  color: #a855f7; border: 1px solid rgba(168,85,247,0.4);
+  border-radius: var(--radius); font-size: 13px; font-weight: 600;
+  font-family: var(--font-body); cursor: pointer; letter-spacing: 0.03em;
+  transition: all 0.2s;
+}
+.btn-ai:hover {
+  border-color: #a855f7; color: #fff;
+  box-shadow: 0 0 20px rgba(168,85,247,0.25), inset 0 0 20px rgba(168,85,247,0.05);
+}
+.btn-ai:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-ai[hidden] { display: none; }
+
+/* ── Panel IA ── */
+.ai-panel {
+  background: linear-gradient(135deg, rgba(168,85,247,0.05) 0%, rgba(2,6,23,0.8) 100%);
+  border: 1px solid rgba(168,85,247,0.25);
+  border-radius: var(--radius-lg);
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+.ai-panel[hidden] { display: none; }
+.ai-panel-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 1.25rem;
+  border-bottom: 1px solid rgba(168,85,247,0.15);
+  font-family: var(--font-mono); font-size: 11px;
+  font-weight: 500; color: #a855f7; letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.ai-badge {
+  margin-left: auto;
+  font-size: 10px; padding: 2px 8px;
+  background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.2);
+  border-radius: 20px; color: rgba(168,85,247,0.8);
+}
+.ai-content { padding: 1.25rem; }
+.ai-text {
+  font-family: var(--font-body); font-size: 13px;
+  color: var(--silver); line-height: 1.8;
+}
+.ai-text strong { color: #c084fc; font-weight: 600; }
+.ai-text p { margin-bottom: 0.75rem; }
+.ai-text p:last-child { margin-bottom: 0; }
+.ai-footer {
+  margin-top: 1rem; padding-top: 0.75rem;
+  border-top: 1px solid rgba(168,85,247,0.1);
+  font-family: var(--font-mono); font-size: 10px;
+  color: rgba(168,85,247,0.4); letter-spacing: 0.04em;
+}
+.ai-loading {
+  display: flex; align-items: center; gap: 10px;
+  color: #a855f7; font-family: var(--font-mono); font-size: 12px;
+}
+.ai-error {
+  color: #fc814a; font-size: 13px; font-family: var(--font-body);
+}

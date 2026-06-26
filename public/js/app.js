@@ -3,7 +3,8 @@ let currentTab = "fecha";
 
 document.addEventListener("DOMContentLoaded", () => {
   const today = new Date().toISOString().split("T")[0];
-  document.getElementById("input-fecha").value = today;
+  document.getElementById("input-fecha-desde").value = today;
+  document.getElementById("input-fecha-hasta").value = today;
 
   checkHealth();
 
@@ -14,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-buscar").addEventListener("click", buscar);
   document.getElementById("btn-analizar").addEventListener("click", analizar);
 
-  ["input-fecha", "input-org", "input-cod", "input-ticket"].forEach((id) => {
+  ["input-fecha-desde", "input-fecha-hasta", "input-org", "input-cod"].forEach((id) => {
     document.getElementById(id)?.addEventListener("keydown", (e) => {
       if (e.key === "Enter") buscar();
     });
@@ -22,12 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("filter-input").addEventListener("input", aplicarFiltros);
   document.getElementById("filter-estado").addEventListener("change", aplicarFiltros);
-
-  ["input-fecha", "input-org", "input-cod", "input-ticket"].forEach((id) => {
-    document.getElementById(id)?.addEventListener("input", actualizarUrlPreview);
-  });
-
-  actualizarUrlPreview();
 });
 
 async function checkHealth() {
@@ -35,10 +30,10 @@ async function checkHealth() {
   try {
     const res = await fetch("/api/health");
     if (res.ok) {
-      badge.innerHTML = `<span class="dot dot-green"></span><span>Backend activo</span>`;
+      badge.innerHTML = `<span class="dot dot-green"></span><span>Sistema activo</span>`;
     } else throw new Error();
   } catch {
-    badge.innerHTML = `<span class="dot dot-red"></span><span>Sin conexión</span>`;
+    badge.innerHTML = `<span class="dot dot-red"></span><span>Sistema sin conexión</span>`;
   }
 }
 
@@ -46,24 +41,6 @@ function switchTab(tab) {
   currentTab = tab;
   document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
   document.querySelectorAll(".tab-panel").forEach((p) => p.classList.toggle("active", p.id === `panel-${tab}`));
-  actualizarUrlPreview();
-}
-
-function actualizarUrlPreview() {
-  const ticket = document.getElementById("input-ticket").value.trim();
-  let path = "";
-  if (currentTab === "fecha") {
-    const fecha = document.getElementById("input-fecha").value || "YYYY-MM-DD";
-    path = `/api/licitaciones-fecha?fecha=${fecha}`;
-  } else if (currentTab === "organismo") {
-    const cod = document.getElementById("input-org").value || "{codigo}";
-    path = `/api/licitaciones-organismo?codigo=${cod}`;
-  } else {
-    const cod = document.getElementById("input-cod").value || "{codigo}";
-    path = `/api/licitaciones-codigo?codigo=${cod}`;
-  }
-  if (ticket) path += `&ticket=***`;
-  document.getElementById("url-preview").textContent = `GET ${path}`;
 }
 
 async function buscar() {
@@ -73,15 +50,15 @@ async function buscar() {
   mostrarCargando();
 
   try {
-    const ticket = document.getElementById("input-ticket").value.trim();
     const headers = {};
-    if (ticket) headers["x-chilecompra-ticket"] = ticket;
 
     let url = "";
     if (currentTab === "fecha") {
-      const fecha = document.getElementById("input-fecha").value;
-      if (!fecha) throw new Error("Selecciona una fecha.");
-      url = `/api/licitaciones-fecha?fecha=${fecha}`;
+      const desde = document.getElementById("input-fecha-desde").value;
+      const hasta = document.getElementById("input-fecha-hasta").value;
+      if (!desde) throw new Error("Selecciona una fecha de inicio.");
+      url = `/api/licitaciones-fecha?fecha=${desde}`;
+      if (hasta && hasta !== desde) url += `&hasta=${hasta}`;
     } else if (currentTab === "organismo") {
       const cod = document.getElementById("input-org").value.trim();
       if (!cod) throw new Error("Ingresa un código de organismo.");

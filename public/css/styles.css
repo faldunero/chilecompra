@@ -271,13 +271,12 @@ body {
 
 /* ── Date range ── */
 .date-range-group {
-  display: flex; align-items: flex-end; gap: 8px;
+  display: flex; flex-direction: column; gap: 10px;
 }
-.date-range-field { flex: 1; }
+.date-range-field { width: 100%; }
 .date-range-separator {
-  font-family: var(--font-mono); font-size: 13px;
-  color: var(--silver-muted); padding-bottom: 10px;
-  flex-shrink: 0;
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--silver-muted); text-align: center; letter-spacing: 0.1em;
 }
 input[type="date"].field-input::-webkit-calendar-picker-indicator {
   filter: invert(0.5) sepia(1) saturate(3) hue-rotate(160deg);

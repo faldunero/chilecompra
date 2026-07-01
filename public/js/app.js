@@ -2,6 +2,35 @@ let allResults = [];
 let currentTab = "fecha";
 const edicionParams = { tipo: "", estado: "", keyword: "", region: "" };
 
+// Mapa código de región (valor del <select id="ep-region">) → palabra clave que
+// debe aparecer dentro de Organismo.RegionUnidad (texto libre que entrega la API,
+// ej: "Región Metropolitana de Santiago", "Región de Valparaíso").
+const REGION_KEYWORDS = {
+  "1": "tarapaca",
+  "2": "antofagasta",
+  "3": "atacama",
+  "4": "coquimbo",
+  "5": "valparaiso",
+  "6": "higgins",
+  "7": "maule",
+  "8": "biobio",
+  "9": "araucania",
+  "10": "los lagos",
+  "11": "aysen",
+  "12": "magallanes",
+  "13": "metropolitana",
+  "14": "los rios",
+  "15": "arica",
+  "16": "nuble",
+};
+
+function normalizarTexto(str) {
+  return String(str || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, ""); // quita tildes/diacríticos
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const today = new Date().toISOString().split("T")[0];
   document.getElementById("input-fecha-desde").value = today;
@@ -208,7 +237,8 @@ function aplicarFiltros() {
     const matchTipo    = !edicionParams.tipo    || (l.CodigoExterno || "").includes(edicionParams.tipo);
     const matchEstado  = !edicionParams.estado  || (l.Estado || "").toLowerCase().includes(edicionParams.estado);
     const matchKeyword = !edicionParams.keyword || (l.Nombre || "").toLowerCase().includes(edicionParams.keyword);
-    const matchRegion  = !edicionParams.region  || String(l.Organismo?.Region || "") === edicionParams.region;
+    const matchRegion  = !edicionParams.region  ||
+      normalizarTexto(l.Organismo?.RegionUnidad).includes(REGION_KEYWORDS[edicionParams.region] || "\0");
     return matchQuery && matchEstadoToolbar && matchTipo && matchEstado && matchKeyword && matchRegion;
   });
   renderLicitaciones(filtradas);

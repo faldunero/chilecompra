@@ -31,7 +31,7 @@ function getMockData(params) {
       FechaCierre: "30-06-2026 15:00:00",
       FechaPublicacion: "20-06-2026 09:00:00",
       Tipo: "Licitación Pública",
-      Organismo: { CodigoOrganismo: "89100", NombreOrganismo: "Ministerio de Educación" },
+      Organismo: { CodigoOrganismo: "89100", NombreOrganismo: "Ministerio de Educación", RegionUnidad: "Región Metropolitana de Santiago" },
     },
     {
       CodigoExterno: "2345-1-LE26",
@@ -40,7 +40,7 @@ function getMockData(params) {
       FechaCierre: "05-07-2026 12:00:00",
       FechaPublicacion: "21-06-2026 10:30:00",
       Tipo: "Licitación Pública",
-      Organismo: { CodigoOrganismo: "11201", NombreOrganismo: "Ministerio de Salud" },
+      Organismo: { CodigoOrganismo: "11201", NombreOrganismo: "Ministerio de Salud", RegionUnidad: "Región de Valparaíso" },
     },
     {
       CodigoExterno: "3456-2-LP26",
@@ -49,7 +49,7 @@ function getMockData(params) {
       FechaCierre: "15-07-2026 17:00:00",
       FechaPublicacion: "22-06-2026 08:00:00",
       Tipo: "Licitación Pública",
-      Organismo: { CodigoOrganismo: "20501", NombreOrganismo: "Subsecretaría del Interior" },
+      Organismo: { CodigoOrganismo: "20501", NombreOrganismo: "Subsecretaría del Interior", RegionUnidad: "Región Metropolitana de Santiago" },
     },
     {
       CodigoExterno: "4567-3-LE26",
@@ -58,7 +58,7 @@ function getMockData(params) {
       FechaCierre: "15-06-2026 15:00:00",
       FechaPublicacion: "01-06-2026 09:00:00",
       Tipo: "Licitación Privada",
-      Organismo: { CodigoOrganismo: "89100", NombreOrganismo: "Ministerio de Educación" },
+      Organismo: { CodigoOrganismo: "89100", NombreOrganismo: "Ministerio de Educación", RegionUnidad: "Región Metropolitana de Santiago" },
     },
     {
       CodigoExterno: "5678-4-TD26",
@@ -67,7 +67,7 @@ function getMockData(params) {
       FechaCierre: "10-06-2026 12:00:00",
       FechaPublicacion: "28-05-2026 11:00:00",
       Tipo: "Trato Directo",
-      Organismo: { CodigoOrganismo: "74000", NombreOrganismo: "Municipalidad de Santiago" },
+      Organismo: { CodigoOrganismo: "74000", NombreOrganismo: "Municipalidad de Santiago", RegionUnidad: "Región Metropolitana de Santiago" },
     },
     {
       CodigoExterno: "6789-5-LE26",
@@ -76,7 +76,7 @@ function getMockData(params) {
       FechaCierre: "20-07-2026 16:00:00",
       FechaPublicacion: "23-06-2026 14:00:00",
       Tipo: "Licitación Pública",
-      Organismo: { CodigoOrganismo: "30100", NombreOrganismo: "Servicio de Registro Civil" },
+      Organismo: { CodigoOrganismo: "30100", NombreOrganismo: "Servicio de Registro Civil", RegionUnidad: "Región del Biobío" },
     },
     {
       CodigoExterno: "7890-6-LP26",
@@ -85,7 +85,7 @@ function getMockData(params) {
       FechaCierre: "25-07-2026 15:00:00",
       FechaPublicacion: "24-06-2026 09:00:00",
       Tipo: "Licitación Pública",
-      Organismo: { CodigoOrganismo: "11201", NombreOrganismo: "Ministerio de Salud" },
+      Organismo: { CodigoOrganismo: "11201", NombreOrganismo: "Ministerio de Salud", RegionUnidad: "Región de Valparaíso" },
     },
     {
       CodigoExterno: "8901-7-LE26",
@@ -94,7 +94,7 @@ function getMockData(params) {
       FechaCierre: "01-06-2026 12:00:00",
       FechaPublicacion: "15-05-2026 10:00:00",
       Tipo: "Licitación Privada",
-      Organismo: { CodigoOrganismo: "74000", NombreOrganismo: "Municipalidad de Santiago" },
+      Organismo: { CodigoOrganismo: "74000", NombreOrganismo: "Municipalidad de Santiago", RegionUnidad: "Región Metropolitana de Santiago" },
     },
   ];
 
@@ -136,6 +136,12 @@ function normalizeResponse(data) {
           l.Organismo?.NombreOrganismo ||
           l.comprador?.nombreOrganismo ||
           l.organismo?.nombreOrganismo ||
+          "",
+        RegionUnidad:
+          l.Comprador?.RegionUnidad ||
+          l.Organismo?.RegionUnidad ||
+          l.comprador?.regionUnidad ||
+          l.organismo?.regionUnidad ||
           "",
       },
     })),

@@ -20,6 +20,27 @@ function formatFecha(dateStr) {
   return `${d}${m}${y}`;
 }
 
+// Genera un arreglo de fechas ddmmaaaa entre dos fechas ISO (YYYY-MM-DD), inclusive.
+// La API de Licitaciones no soporta rangos nativamente (solo un "fecha" por
+// consulta), así que el rango se arma consultando día por día.
+function getRangoFechas(desdeISO, hastaISO, maxDias = 31) {
+  const desde = new Date(desdeISO + "T00:00:00Z");
+  const hasta = new Date(hastaISO + "T00:00:00Z");
+  if (isNaN(desde) || isNaN(hasta) || hasta < desde) return null;
+
+  const dias = Math.round((hasta - desde) / 86400000) + 1;
+  if (dias > maxDias) return { error: `Rango muy amplio (${dias} días). Máximo permitido: ${maxDias} días.` };
+
+  const fechas = [];
+  for (let d = new Date(desde); d <= hasta; d.setUTCDate(d.getUTCDate() + 1)) {
+    const dd = String(d.getUTCDate()).padStart(2, "0");
+    const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const yyyy = d.getUTCFullYear();
+    fechas.push(`${dd}${mm}${yyyy}`);
+  }
+  return { fechas };
+}
+
 function normalizeResponse(data) {
   const listado = data.Listado || data.listado || [];
   return {
@@ -55,27 +76,34 @@ function normalizeResponse(data) {
   };
 }
 
-async function fetchLicitaciones(params, res) {
+// Llama a la API real y devuelve { ok:true, data } o { ok:false, status, error },
+// sin escribir en `res`. Permite reutilizar la llamada en endpoints que hacen
+// una sola consulta y en endpoints que hacen varias (ej. rango de fechas).
+async function getLicitaciones(params) {
   if (!params.ticket) {
-    return res.status(400).json({
-      error: "Ticket no configurado. Define CHILECOMPRA_TICKET en las variables de entorno.",
-    });
+    return { ok: false, status: 400, error: "Ticket no configurado. Define CHILECOMPRA_TICKET en las variables de entorno." };
   }
   try {
     const { data } = await axios.get(BASE_URL, { params, timeout: 15000 });
-    return res.status(200).json(normalizeResponse(data));
+    return { ok: true, data: normalizeResponse(data) };
   } catch (err) {
     if (err.response) {
       const s = err.response.status;
-      if (s === 401 || s === 403)
-        return res.status(401).json({ error: "Ticket inválido o sin autorización." });
-      return res.status(s).json({ error: `Error de MercadoPublico: ${s}` });
+      if (s === 401 || s === 403) return { ok: false, status: 401, error: "Ticket inválido o sin autorización." };
+      return { ok: false, status: s, error: `Error de MercadoPublico: ${s}` };
     }
-    if (err.code === "ECONNABORTED")
-      return res.status(504).json({ error: "Tiempo de espera agotado." });
+    if (err.code === "ECONNABORTED") return { ok: false, status: 504, error: "Tiempo de espera agotado." };
     console.error("[chilecompra]", err.message);
-    return res.status(500).json({ error: "Error interno." });
+    return { ok: false, status: 500, error: "Error interno." };
   }
 }
 
-module.exports = { getTicket, formatFecha, fetchLicitaciones };
+// Wrapper para endpoints de una sola consulta (código, organismo, activas):
+// llama a getLicitaciones y escribe la respuesta HTTP directamente.
+async function fetchLicitaciones(params, res) {
+  const result = await getLicitaciones(params);
+  if (!result.ok) return res.status(result.status).json({ error: result.error });
+  return res.status(200).json(result.data);
+}
+
+module.exports = { getTicket, formatFecha, getRangoFechas, getLicitaciones, fetchLicitaciones };

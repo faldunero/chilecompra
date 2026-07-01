@@ -149,6 +149,8 @@ async function buscar() {
       const cod = document.getElementById("input-org").value.trim();
       if (!cod) throw new Error("Ingresa un código de organismo.");
       url = `/api/licitaciones-organismo?codigo=${encodeURIComponent(cod)}`;
+    } else if (currentTab === "activas") {
+      url = `/api/licitaciones-activas`;
     } else {
       const cod = document.getElementById("input-cod").value.trim();
       if (!cod) throw new Error("Ingresa un código de licitación.");

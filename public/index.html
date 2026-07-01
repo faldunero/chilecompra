@@ -126,6 +126,7 @@
           <button class="tab active" data-tab="fecha">Por fecha</button>
           <button class="tab" data-tab="organismo">Por organismo</button>
           <button class="tab" data-tab="codigo">Por código</button>
+          <button class="tab" data-tab="activas">Activas ahora</button>
         </div>
 
         <div class="tab-panel active" id="panel-fecha">
@@ -148,6 +149,9 @@
         <div class="tab-panel" id="panel-codigo">
           <label class="field-label" for="input-cod">Código de licitación</label>
           <input type="text" id="input-cod" class="field-input" placeholder="Ej: 2345-1-LE26" />
+        </div>
+        <div class="tab-panel" id="panel-activas">
+          <p style="color:#94a3b8;font-size:13px;line-height:1.5;margin:0 0 12px;">Trae todas las licitaciones publicadas y vigentes en este momento, sin importar la fecha de publicación.</p>
         </div>
 
         <button class="btn-primary" id="btn-buscar">

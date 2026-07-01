@@ -14,7 +14,7 @@ module.exports = async function handler(req, res) {
   const fechaFormatted = formatFecha(fecha);
   if (!fechaFormatted) return res.status(400).json({ error: "Formato inválido. Usa YYYY-MM-DD" });
 
-  const params = { fecha: fechaFormatted, formato: "json" };
+  const params = { fecha: fechaFormatted };
   if (ticket) params.ticket = ticket;
 
   return fetchLicitaciones(params, res);

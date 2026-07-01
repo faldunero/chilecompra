@@ -11,7 +11,7 @@ module.exports = async function handler(req, res) {
   const { codigo } = req.query;
   if (!codigo) return res.status(400).json({ error: "Parámetro requerido: codigo" });
 
-  const params = { CodigoLicitacion: codigo, formato: "json" };
+  const params = { codigo: codigo };
   if (ticket) params.ticket = ticket;
 
   return fetchLicitaciones(params, res);

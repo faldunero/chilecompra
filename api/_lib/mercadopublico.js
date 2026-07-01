@@ -2,7 +2,7 @@ const axios = require("axios");
 
 const BASE_URL =
   process.env.MERCADOPUBLICO_BASE_URL ||
-  "https://www.mercadopublico.cl/Licitacion.aspx";
+  "https://api.mercadopublico.cl/servicios/v1/publico/licitaciones.json";
 
 const DEMO_MODE = process.env.DEMO_MODE === "true";
 
@@ -104,9 +104,9 @@ function getMockData(params) {
     );
     return { Cantidad: filtered.length, Listado: filtered };
   }
-  if (params.CodigoLicitacion) {
+  if (params.codigo) {
     const filtered = base.filter((l) =>
-      l.CodigoExterno.toLowerCase().includes(params.CodigoLicitacion.toLowerCase())
+      l.CodigoExterno.toLowerCase().includes(params.codigo.toLowerCase())
     );
     return { Cantidad: filtered.length, Listado: filtered };
   }
@@ -125,8 +125,18 @@ function normalizeResponse(data) {
       FechaPublicacion: l.FechaPublicacion || l.fechaPublicacion || null,
       Tipo: l.Tipo || l.tipo || "",
       Organismo: {
-        CodigoOrganismo: l.Organismo?.CodigoOrganismo || l.organismo?.codigoOrganismo || "",
-        NombreOrganismo: l.Organismo?.NombreOrganismo || l.organismo?.nombreOrganismo || "",
+        CodigoOrganismo:
+          l.Comprador?.CodigoOrganismo ||
+          l.Organismo?.CodigoOrganismo ||
+          l.comprador?.codigoOrganismo ||
+          l.organismo?.codigoOrganismo ||
+          "",
+        NombreOrganismo:
+          l.Comprador?.NombreOrganismo ||
+          l.Organismo?.NombreOrganismo ||
+          l.comprador?.nombreOrganismo ||
+          l.organismo?.nombreOrganismo ||
+          "",
       },
     })),
   };

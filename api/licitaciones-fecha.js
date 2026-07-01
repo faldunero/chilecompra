@@ -1,5 +1,9 @@
 const { getTicket, formatFecha, getRangoFechas, getLicitaciones } = require("./_lib/mercadopublico");
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
@@ -27,10 +31,21 @@ module.exports = async function handler(req, res) {
   if (rango.error) return res.status(400).json({ error: rango.error });
 
   const resultados = [];
-  for (const fechaDia of rango.fechas) {
+  for (let i = 0; i < rango.fechas.length; i++) {
+    const fechaDia = rango.fechas[i];
     const result = await getLicitaciones({ fecha: fechaDia, ticket });
-    if (!result.ok) return res.status(result.status).json({ error: `Falló la consulta del día ${fechaDia}: ${result.error}` });
+    if (!result.ok) {
+      if (result.status === 429) {
+        return res.status(429).json({
+          error: `MercadoPublico bloqueó las consultas por exceso de solicitudes (llegamos hasta el día ${fechaDia} de ${rango.fechas.length}). Espera unos minutos antes de reintentar, o prueba con un rango más corto.`,
+        });
+      }
+      return res.status(result.status).json({ error: `Falló la consulta del día ${fechaDia}: ${result.error}` });
+    }
     resultados.push(result.data);
+
+    // Pausa entre llamadas para no gatillar el límite de ráfaga de la API real.
+    if (i < rango.fechas.length - 1) await sleep(250);
   }
 
   const vistos = new Set();

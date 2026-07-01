@@ -23,7 +23,7 @@ function formatFecha(dateStr) {
 // Genera un arreglo de fechas ddmmaaaa entre dos fechas ISO (YYYY-MM-DD), inclusive.
 // La API de Licitaciones no soporta rangos nativamente (solo un "fecha" por
 // consulta), así que el rango se arma consultando día por día.
-function getRangoFechas(desdeISO, hastaISO, maxDias = 31) {
+function getRangoFechas(desdeISO, hastaISO, maxDias = 10) {
   const desde = new Date(desdeISO + "T00:00:00Z");
   const hasta = new Date(hastaISO + "T00:00:00Z");
   if (isNaN(desde) || isNaN(hasta) || hasta < desde) return null;

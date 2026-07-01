@@ -11,6 +11,10 @@
 </head>
 <body>
 
+  <div id="auth-loading-overlay" style="position:fixed;inset:0;background:#020617;display:flex;align-items:center;justify-content:center;z-index:2000;">
+    <div id="auth-loading-content" style="color:#94a3b8;font-family:'Inter',sans-serif;font-size:13px;">Verificando acceso…</div>
+  </div>
+
   <header class="app-header">
     <div class="header-inner">
       <div class="header-brand">
@@ -24,6 +28,7 @@
         <span class="dot dot-gray"></span>
         <span>Sistema…</span>
       </div>
+      <div class="header-status" id="header-user" hidden style="gap:8px;"></div>
     </div>
   </header>
 
@@ -206,6 +211,12 @@
           <option value="cerrada">Cerrada</option>
           <option value="adjudicada">Adjudicada</option>
         </select>
+        <button class="edicion-btn-clear" id="btn-limpiar-busqueda" title="Limpiar todos los filtros">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Limpiar
+        </button>
       </div>
 
       <div class="demo-banner" id="demo-banner" hidden>
@@ -248,6 +259,9 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/auth-guard.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

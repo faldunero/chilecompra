@@ -15,6 +15,7 @@ ShellTI es una pyme chilena de tecnología que ofrece:
 
 Es una pyme sin experiencia previa con el Estado, por lo que prioriza:
 - Licitaciones de monto accesible (Trato Directo o Licitación Privada/LE)
+- Procesos de Compra Ágil (montos bajos, convocatoria rápida, sin necesidad de track record)
 - Organismos que liciten servicios TI, no hardware masivo
 - Proyectos donde pueda destacar por especialización técnica
 - Licitaciones con plazo de cierre mayor a 5 días (para preparar bien la oferta)
@@ -60,6 +61,26 @@ function groqRequest(messages) {
   });
 }
 
+function formatLicitaciones(licitaciones) {
+  if (!licitaciones || !licitaciones.length) return null;
+  return licitaciones.map((l, i) =>
+    `${i + 1}. [${l.CodigoExterno}] ${l.Nombre}
+   Organismo: ${l.Organismo?.NombreOrganismo || "N/A"}
+   Estado: ${l.Estado} | Tipo: ${l.Tipo || "N/A"} | Cierre: ${l.FechaCierre || "N/A"}`
+  ).join("\n\n");
+}
+
+// Compra Ágil trae una estructura distinta a Licitaciones (ver §6.1 de la guía
+// de Compra Ágil): codigo/nombre/estado.glosa/institucion.organismo_comprador/etc.
+function formatCompraAgil(compraAgil) {
+  if (!compraAgil || !compraAgil.length) return null;
+  return compraAgil.map((c, i) =>
+    `${i + 1}. [${c.codigo}] ${c.nombre}
+   Organismo: ${c.institucion?.organismo_comprador || "N/A"}
+   Estado: ${c.estado?.glosa || "N/A"} | Cierre: ${c.fechas?.fecha_cierre || "N/A"} | Monto disponible: ${c.montos?.monto_disponible_clp ?? "N/A"} CLP`
+  ).join("\n\n");
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -75,47 +96,55 @@ module.exports = async function handler(req, res) {
   req.on("data", (chunk) => (body += chunk));
   req.on("end", async () => {
     try {
-      const { licitaciones } = JSON.parse(body);
-      if (!licitaciones || !licitaciones.length) {
-        return res.status(400).json({ error: "No hay licitaciones para analizar." });
+      const { licitaciones, compraAgil } = JSON.parse(body);
+
+      const licitacionesTexto = formatLicitaciones(licitaciones);
+      const compraAgilTexto = formatCompraAgil(compraAgil);
+
+      if (!licitacionesTexto && !compraAgilTexto) {
+        return res.status(400).json({ error: "No hay licitaciones ni procesos de Compra Ágil para analizar." });
       }
 
-      const listaTexto = licitaciones.map((l, i) =>
-        `${i + 1}. [${l.CodigoExterno}] ${l.Nombre}
-   Organismo: ${l.Organismo?.NombreOrganismo || "N/A"}
-   Estado: ${l.Estado} | Tipo: ${l.Tipo || "N/A"} | Cierre: ${l.FechaCierre || "N/A"}`
-      ).join("\n\n");
+      const bloques = [];
+      if (licitacionesTexto) bloques.push(`LICITACIONES:\n${licitacionesTexto}`);
+      if (compraAgilTexto) bloques.push(`PROCESOS DE COMPRA ÁGIL:\n${compraAgilTexto}`);
 
       const messages = [
         {
           role: "system",
-          content: `Eres un asesor experto en licitaciones públicas chilenas (Mercado Público). 
-Tu misión es analizar licitaciones y ayudar a una empresa a identificar oportunidades relevantes.
+          content: `Eres un asesor experto en compras públicas chilenas (Mercado Público).
+Tu misión es analizar licitaciones y/o procesos de Compra Ágil y ayudar a una empresa a identificar oportunidades relevantes.
 Responde siempre en español, de forma concisa y estructurada.
-Usa emojis para hacer el análisis más legible.`,
+Usa emojis para hacer el análisis más legible.
+Si recibes ambas fuentes (Licitaciones y Compra Ágil), trátalas en conjunto y aclara de cuál fuente viene cada oportunidad que recomiendes.`,
         },
         {
           role: "user",
-          content: `Analiza estas licitaciones para ShellTI:
+          content: `Analiza estos procesos de compras públicas para ShellTI:
 
 PERFIL DE LA EMPRESA:
 ${SHELLTI_PERFIL}
 
-LICITACIONES A ANALIZAR:
-${listaTexto}
+${bloques.join("\n\n")}
 
 Entrega:
 1. **Resumen ejecutivo** (2-3 líneas del panorama general)
-2. **Top 3 oportunidades** para ShellTI, con código, razón y nivel de fit (Alto/Medio/Bajo)
-3. **Alertas** (licitaciones que cierran pronto o requieren atención inmediata)
+2. **Top 3 oportunidades** para ShellTI, con código, fuente (Licitación o Compra Ágil), razón y nivel de fit (Alto/Medio/Bajo)
+3. **Alertas** (procesos que cierran pronto o requieren atención inmediata)
 4. **Recomendación** (qué hacer hoy)
 
-Sé directo y accionable. Si ninguna licitación es relevante, dilo claramente.`,
+Sé directo y accionable. Si ninguno es relevante, dilo claramente.`,
         },
       ];
 
       const analysis = await groqRequest(messages);
-      return res.status(200).json({ analysis, total: licitaciones.length });
+      const total = (licitaciones?.length || 0) + (compraAgil?.length || 0);
+      return res.status(200).json({
+        analysis,
+        total,
+        totalLicitaciones: licitaciones?.length || 0,
+        totalCompraAgil: compraAgil?.length || 0,
+      });
     } catch (err) {
       console.error("[groq]", err.message);
       return res.status(500).json({ error: "Error al analizar con IA: " + err.message });

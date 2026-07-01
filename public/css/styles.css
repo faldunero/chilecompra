@@ -352,7 +352,7 @@ input[type="date"].field-input::-webkit-calendar-picker-indicator:hover { opacit
 }
 
 .edicion-fields {
-  display: grid; grid-template-columns: repeat(4, 1fr) auto;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 10px; align-items: end;
 }
 .edicion-field { display: flex; flex-direction: column; gap: 5px; }
@@ -374,7 +374,7 @@ input[type="date"].field-input::-webkit-calendar-picker-indicator:hover { opacit
 }
 .edicion-input option { background: var(--deep-blue-2); color: var(--silver); }
 
-.edicion-actions { display: flex; gap: 6px; align-items: flex-end; }
+.edicion-actions { display: flex; gap: 6px; align-items: center; grid-column: 1 / -1; margin-top: 4px; }
 .edicion-btn-apply {
   display: flex; align-items: center; gap: 5px;
   height: 34px; padding: 0 14px;

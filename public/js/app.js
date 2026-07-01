@@ -59,6 +59,21 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("filter-input").addEventListener("input", aplicarFiltros);
   document.getElementById("filter-estado").addEventListener("change", aplicarFiltros);
 
+  document.getElementById("btn-limpiar-busqueda")?.addEventListener("click", () => {
+    document.getElementById("filter-input").value = "";
+    document.getElementById("filter-estado").value = "";
+    document.getElementById("ep-tipo").value = "";
+    document.getElementById("ep-estado").value = "";
+    document.getElementById("ep-keyword").value = "";
+    document.getElementById("ep-region").value = "";
+    document.getElementById("ep-cierre-desde").value = "";
+    document.getElementById("ep-cierre-hasta").value = "";
+    edicionParams.tipo = edicionParams.estado = edicionParams.keyword = edicionParams.region = "";
+    edicionParams.cierreDesde = edicionParams.cierreHasta = "";
+    actualizarIndicadorEdicion();
+    if (allResults.Listado) aplicarFiltros();
+  });
+
   // ── Modal de detalle (clic en una tarjeta) ──
   document.getElementById("results-container").addEventListener("click", (e) => {
     const card = e.target.closest(".lic-card");

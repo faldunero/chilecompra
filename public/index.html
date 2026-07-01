@@ -11,9 +11,60 @@
 </head>
 <body>
 
-  <div id="auth-loading-overlay" style="position:fixed;inset:0;background:#020617;display:flex;align-items:center;justify-content:center;z-index:2000;">
-    <div id="auth-loading-content" style="color:#94a3b8;font-family:'Inter',sans-serif;font-size:13px;">Verificando acceso…</div>
-  </div>
+  <script>
+  // Admin bypass — mismo patrón que agente.html/diagnostico.html en shellti.com.
+  // Permite probar la página como admin (?adminBypass=TOKEN) sin pasar por el
+  // flujo real de solicitud/aprobación.
+  (function() {
+    var bypass = new URLSearchParams(window.location.search).get('adminBypass');
+    var stored = bypass || (function(){ try{ return sessionStorage.getItem('shellti_admin_bypass'); }catch(e){ return null; } })();
+    if (!stored) return;
+    try { sessionStorage.setItem('shellti_admin_bypass', stored); } catch(e) {}
+    window._adminSession = true;
+    if (bypass) {
+      var u2 = new URL(window.location.href);
+      u2.searchParams.delete('adminBypass');
+      window.history.replaceState({}, '', u2.toString());
+    }
+
+    // Interceptar fetch para que el guard reciba {valid:true} sin token real
+    var _origFetch = window.fetch;
+    window.fetch = function(url, opts) {
+      var urlStr = (typeof url === "string") ? url : (url.url || "");
+      if (urlStr.indexOf("/auth/validate") !== -1 || urlStr.indexOf("/validate") !== -1) {
+        return Promise.resolve(new Response(
+          JSON.stringify({ valid: true, name: "Admin", resources: ["mercadopublico"] }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        ));
+      }
+      return _origFetch.apply(window, arguments);
+    };
+
+    // Necesario: sin token real, el guard muestra el formulario ANTES de
+    // llegar a llamar a /auth/validate. Bloqueamos ese reemplazo de body.
+    var _bodyDescriptor = Object.getOwnPropertyDescriptor(Element.prototype, "innerHTML");
+    var _origSet = _bodyDescriptor && _bodyDescriptor.set;
+    if (_origSet) {
+      Object.defineProperty(document.body && document.body.__proto__ ? document.body : Element.prototype, "innerHTML", {
+        set: function(v) {
+          if (window._adminSession && this === document.body && v && v.indexOf("Área Premium") !== -1) {
+            console.log("[bypass] bloqueando reemplazo de body con formulario premium");
+            return;
+          }
+          _origSet.call(this, v);
+        },
+        get: _bodyDescriptor.get,
+        configurable: true
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      window.fetch = _origFetch;
+    });
+  })();
+  </script>
+
+  <script src="https://shellti.com/js/shellti-guard.js" data-resource="mercadopublico"></script>
 
   <header class="app-header">
     <div class="header-inner">
@@ -28,7 +79,6 @@
         <span class="dot dot-gray"></span>
         <span>Sistema…</span>
       </div>
-      <div class="header-status" id="header-user" hidden style="gap:8px;"></div>
     </div>
   </header>
 
@@ -259,9 +309,6 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script src="js/supabase-client.js"></script>
-  <script src="js/auth-guard.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

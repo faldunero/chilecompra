@@ -55,6 +55,19 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("filter-input").addEventListener("input", aplicarFiltros);
   document.getElementById("filter-estado").addEventListener("change", aplicarFiltros);
 
+  // ── Modal de detalle (clic en una tarjeta) ──
+  document.getElementById("results-container").addEventListener("click", (e) => {
+    const card = e.target.closest(".lic-card");
+    if (card && card.dataset.codigo) abrirDetalle(card.dataset.codigo);
+  });
+  document.getElementById("detalle-cerrar").addEventListener("click", cerrarDetalle);
+  document.getElementById("detalle-overlay").addEventListener("click", (e) => {
+    if (e.target.id === "detalle-overlay") cerrarDetalle();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") cerrarDetalle();
+  });
+
   // ── Barra Edición ──
   document.querySelectorAll(".edicion-section-toggle").forEach((btn) => {
     btn.addEventListener("click", (e) => {
@@ -276,7 +289,7 @@ function renderLicitaciones(list) {
     const orgNombre = l.Organismo?.NombreOrganismo || l.Organismo?.CodigoOrganismo || "—";
     const cierre = l.FechaCierre ? `<span class="lic-meta-item">${iconClock()}${l.FechaCierre}</span>` : "";
     const tipo = l.Tipo ? `<span class="lic-meta-item">${iconTag()}${l.Tipo}</span>` : "";
-    return `<div class="lic-card">
+    return `<div class="lic-card" data-codigo="${escHtml(l.CodigoExterno)}" style="cursor:pointer;">
       <div class="lic-top">
         <span class="lic-name">${escHtml(l.Nombre || "Sin nombre")}</span>
         <span class="lic-code">${escHtml(l.CodigoExterno)}</span>
@@ -343,4 +356,50 @@ function actualizarIndicadorEdicion() {
   } else if (!hayFiltros && dotExistente) {
     dotExistente.remove();
   }
+}
+
+// ── Modal de detalle ──
+async function abrirDetalle(codigo) {
+  const overlay = document.getElementById("detalle-overlay");
+  const contenido = document.getElementById("detalle-contenido");
+  overlay.hidden = false;
+  contenido.innerHTML = `<div class="loading-state"><div class="spinner"></div>Cargando detalle…</div>`;
+
+  try {
+    const res = await fetch(`/api/licitaciones-codigo?codigo=${encodeURIComponent(codigo)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+
+    const l = data.Listado?.[0];
+    if (!l) throw new Error("No se encontró la licitación.");
+
+    const monto = l.MontoEstimado
+      ? `${Number(l.MontoEstimado).toLocaleString("es-CL")} ${escHtml(l.Moneda || "")}`
+      : "No informado";
+    const org = l.Organismo || {};
+    const ubicacion = [org.NombreUnidad, org.ComunaUnidad, org.RegionUnidad].filter(Boolean).map(escHtml).join(" · ");
+
+    contenido.innerHTML = `
+      <div style="margin-bottom:16px;">
+        <span class="badge ${getBadgeClass(l.Estado)}">${escHtml(l.Estado || "Desconocido")}</span>
+        <span class="lic-code" style="margin-left:8px;">${escHtml(l.CodigoExterno)}</span>
+      </div>
+      <h2 style="font-size:18px;margin:0 0 16px;color:#e2e8f0;">${escHtml(l.Nombre || "Sin nombre")}</h2>
+      ${l.Descripcion ? `<p style="color:#cbd5e1;font-size:14px;line-height:1.6;margin:0 0 20px;">${escHtml(l.Descripcion)}</p>` : ""}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:13px;">
+        <div><div style="color:#64748b;margin-bottom:4px;">Organismo</div><div style="color:#e2e8f0;">${escHtml(org.NombreOrganismo || "—")}</div></div>
+        <div><div style="color:#64748b;margin-bottom:4px;">Ubicación</div><div style="color:#e2e8f0;">${ubicacion || "—"}</div></div>
+        <div><div style="color:#64748b;margin-bottom:4px;">Tipo</div><div style="color:#e2e8f0;">${escHtml(l.TipoDescripcion || l.Tipo || "—")}</div></div>
+        <div><div style="color:#64748b;margin-bottom:4px;">Monto estimado</div><div style="color:#e2e8f0;">${monto}</div></div>
+        <div><div style="color:#64748b;margin-bottom:4px;">Fecha de cierre</div><div style="color:#e2e8f0;">${escHtml(l.FechaCierre || "—")}</div></div>
+        <div><div style="color:#64748b;margin-bottom:4px;">Fecha de publicación</div><div style="color:#e2e8f0;">${escHtml(l.FechaPublicacion || "—")}</div></div>
+      </div>
+    `;
+  } catch (err) {
+    contenido.innerHTML = `<div class="error-box"><div><strong>No se pudo cargar el detalle</strong>${escHtml(err.message)}</div></div>`;
+  }
+}
+
+function cerrarDetalle() {
+  document.getElementById("detalle-overlay").hidden = true;
 }

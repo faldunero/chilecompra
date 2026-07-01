@@ -41,38 +41,76 @@ function getRangoFechas(desdeISO, hastaISO, maxDias = 31) {
   return { fechas };
 }
 
+const ESTADOS = {
+  5: "Publicada",
+  6: "Cerrada",
+  7: "Desierta",
+  8: "Adjudicada",
+  18: "Revocada",
+  19: "Suspendida",
+};
+
+// Solo aparece con datos reales en consultas de detalle (?codigo=...);
+// en listado masivo (fecha/estado/organismo) la API no entrega Tipo.
+const TIPOS = {
+  L1: "Licitación Pública Menor a 100 UTM",
+  LE: "Licitación Pública entre 100 y 1.000 UTM",
+  LP: "Licitación Pública entre 1.000 y 2.000 UTM",
+  LQ: "Licitación Pública entre 2.000 y 5.000 UTM",
+  LR: "Licitación Pública igual o superior a 5.000 UTM",
+  LS: "Licitación Pública de Servicios personales especializados",
+  E2: "Licitación Privada Menor a 100 UTM",
+  CO: "Licitación Privada entre 100 y 1.000 UTM",
+  B2: "Licitación Privada entre 1.000 y 2.000 UTM",
+  H2: "Licitación Privada entre 2.000 y 5.000 UTM",
+  I2: "Licitación Privada Mayor a 5.000 UTM",
+};
+
 function normalizeResponse(data) {
   const listado = data.Listado || data.listado || [];
   return {
     Cantidad: data.Cantidad ?? data.cantidad ?? listado.length,
-    Listado: listado.map((l) => ({
-      CodigoExterno: l.CodigoExterno || l.codigoExterno || "",
-      Nombre: l.Nombre || l.nombre || "",
-      Estado: l.Estado || l.estado || "",
-      FechaCierre: l.FechaCierre || l.fechaCierre || null,
-      FechaPublicacion: l.FechaPublicacion || l.fechaPublicacion || null,
-      Tipo: l.Tipo || l.tipo || "",
-      Organismo: {
-        CodigoOrganismo:
-          l.Comprador?.CodigoOrganismo ||
-          l.Organismo?.CodigoOrganismo ||
-          l.comprador?.codigoOrganismo ||
-          l.organismo?.codigoOrganismo ||
-          "",
-        NombreOrganismo:
-          l.Comprador?.NombreOrganismo ||
-          l.Organismo?.NombreOrganismo ||
-          l.comprador?.nombreOrganismo ||
-          l.organismo?.nombreOrganismo ||
-          "",
-        RegionUnidad:
-          l.Comprador?.RegionUnidad ||
-          l.Organismo?.RegionUnidad ||
-          l.comprador?.regionUnidad ||
-          l.organismo?.regionUnidad ||
-          "",
-      },
-    })),
+    Listado: listado.map((l) => {
+      const tipoRaw = l.Tipo || l.tipo || "";
+      return {
+        CodigoExterno: l.CodigoExterno || l.codigoExterno || "",
+        Nombre: l.Nombre || l.nombre || "",
+        Estado: l.Estado || l.estado || ESTADOS[l.CodigoEstado] || ESTADOS[l.codigoEstado] || "",
+        // La API a veces trae el nivel superior en null en consultas de detalle;
+        // el valor real puede estar anidado en Fechas.*
+        FechaCierre: l.FechaCierre || l.fechaCierre || l.Fechas?.FechaCierre || null,
+        FechaPublicacion: l.FechaPublicacion || l.fechaPublicacion || l.Fechas?.FechaPublicacion || null,
+        FechaAdjudicacion: l.Fechas?.FechaAdjudicacion || null,
+        Tipo: tipoRaw,
+        TipoDescripcion: TIPOS[tipoRaw] || tipoRaw,
+        // Solo vienen en consultas de detalle (?codigo=...), no en listados masivos.
+        Descripcion: l.Descripcion || l.descripcion || "",
+        MontoEstimado: l.MontoEstimado ?? l.montoEstimado ?? null,
+        Moneda: l.Moneda || l.moneda || "",
+        Organismo: {
+          CodigoOrganismo:
+            l.Comprador?.CodigoOrganismo ||
+            l.Organismo?.CodigoOrganismo ||
+            l.comprador?.codigoOrganismo ||
+            l.organismo?.codigoOrganismo ||
+            "",
+          NombreOrganismo:
+            l.Comprador?.NombreOrganismo ||
+            l.Organismo?.NombreOrganismo ||
+            l.comprador?.nombreOrganismo ||
+            l.organismo?.nombreOrganismo ||
+            "",
+          NombreUnidad: l.Comprador?.NombreUnidad || l.comprador?.nombreUnidad || "",
+          ComunaUnidad: l.Comprador?.ComunaUnidad || l.comprador?.comunaUnidad || "",
+          RegionUnidad:
+            l.Comprador?.RegionUnidad ||
+            l.Organismo?.RegionUnidad ||
+            l.comprador?.regionUnidad ||
+            l.organismo?.regionUnidad ||
+            "",
+        },
+      };
+    }),
   };
 }
 

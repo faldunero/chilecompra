@@ -416,7 +416,7 @@ function actualizarIndicadorEdicion() {
 async function abrirDetalle(codigo) {
   const overlay = document.getElementById("detalle-overlay");
   const contenido = document.getElementById("detalle-contenido");
-  overlay.hidden = false;
+  overlay.style.display = "flex";
   contenido.innerHTML = `<div class="loading-state"><div class="spinner"></div>Cargando detalle…</div>`;
 
   try {
@@ -455,5 +455,5 @@ async function abrirDetalle(codigo) {
 }
 
 function cerrarDetalle() {
-  document.getElementById("detalle-overlay").hidden = true;
+  document.getElementById("detalle-overlay").style.display = "none";
 }

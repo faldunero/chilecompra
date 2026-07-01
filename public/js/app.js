@@ -84,7 +84,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target.id === "detalle-overlay") cerrarDetalle();
   });
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") cerrarDetalle();
+    if (e.key === "Escape") { cerrarDetalle(); cerrarPerfil(); }
+  });
+
+  // ── Modal de perfil de negocio ──
+  document.getElementById("btn-perfil").addEventListener("click", abrirPerfil);
+  document.getElementById("perfil-cerrar").addEventListener("click", cerrarPerfil);
+  document.getElementById("perfil-overlay").addEventListener("click", (e) => {
+    if (e.target.id === "perfil-overlay") cerrarPerfil();
   });
 
   // ── Barra Edición ──
@@ -471,4 +478,163 @@ async function abrirDetalle(codigo) {
 
 function cerrarDetalle() {
   document.getElementById("detalle-overlay").style.display = "none";
+}
+
+// ── Perfil de negocio ──
+const PERFIL_REGIONES = [
+  [1, "Tarapacá"], [2, "Antofagasta"], [3, "Atacama"], [4, "Coquimbo"],
+  [5, "Valparaíso"], [6, "O'Higgins"], [7, "Maule"], [8, "Biobío"],
+  [9, "La Araucanía"], [10, "Los Lagos"], [11, "Aysén"], [12, "Magallanes"],
+  [13, "Metropolitana"], [14, "Los Ríos"], [15, "Arica y Parinacota"], [16, "Ñuble"],
+];
+const PERFIL_TIPOS = ["L1", "LE", "LP", "LQ", "LR", "CO", "LS"];
+
+function getShelltiToken() {
+  return localStorage.getItem("shellti_token") || "";
+}
+
+async function abrirPerfil() {
+  const overlay = document.getElementById("perfil-overlay");
+  const contenido = document.getElementById("perfil-contenido");
+  overlay.style.display = "flex";
+  contenido.innerHTML = `<div class="loading-state"><div class="spinner"></div>Cargando tu perfil…</div>`;
+
+  try {
+    const res = await fetch("/api/perfil-negocio", {
+      headers: { "x-shellti-token": getShelltiToken() },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+    renderFormularioPerfil(data.perfil);
+  } catch (err) {
+    contenido.innerHTML = `<div class="error-box"><div><strong>No se pudo cargar tu perfil</strong>${escHtml(err.message)}</div></div>`;
+  }
+}
+
+function cerrarPerfil() {
+  document.getElementById("perfil-overlay").style.display = "none";
+}
+
+function renderFormularioPerfil(perfil) {
+  const p = perfil || {};
+  const regionesSel = new Set((p.regiones || []).map(String));
+  const tiposSel = new Set(p.tipos_licitacion || []);
+
+  const regionesHtml = PERFIL_REGIONES.map(([cod, nombre]) => `
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#cbd5e1;">
+      <input type="checkbox" class="pf-region" value="${cod}" ${regionesSel.has(String(cod)) ? "checked" : ""} />
+      ${escHtml(nombre)}
+    </label>`).join("");
+
+  const tiposHtml = PERFIL_TIPOS.map((t) => `
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#cbd5e1;">
+      <input type="checkbox" class="pf-tipo" value="${t}" ${tiposSel.has(t) ? "checked" : ""} />
+      ${t}
+    </label>`).join("");
+
+  document.getElementById("perfil-contenido").innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <label style="display:block;font-size:11px;color:#64748b;margin-bottom:4px;">Nombre de la empresa *</label>
+        <input id="pf-nombre-empresa" type="text" value="${escHtml(p.nombre_empresa || "")}" style="width:100%;height:36px;padding:0 10px;background:rgba(0,0,0,0.35);border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px;" />
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;color:#64748b;margin-bottom:4px;">Rubro</label>
+        <input id="pf-rubro" type="text" value="${escHtml(p.rubro || "")}" placeholder="Ej: Servicios de TI" style="width:100%;height:36px;padding:0 10px;background:rgba(0,0,0,0.35);border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px;" />
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;color:#64748b;margin-bottom:4px;">Descripción del negocio</label>
+        <textarea id="pf-descripcion" rows="3" style="width:100%;padding:8px 10px;background:rgba(0,0,0,0.35);border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px;resize:vertical;">${escHtml(p.descripcion_negocio || "")}</textarea>
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;color:#64748b;margin-bottom:4px;">Palabras clave (separadas por coma)</label>
+        <input id="pf-keywords" type="text" value="${escHtml((p.palabras_clave || []).join(", "))}" placeholder="Ej: software, ciberseguridad, ley 21.719" style="width:100%;height:36px;padding:0 10px;background:rgba(0,0,0,0.35);border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px;" />
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;color:#64748b;margin-bottom:6px;">Regiones de interés (vacío = todas)</label>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px;">${regionesHtml}</div>
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;color:#64748b;margin-bottom:6px;">Tipos de licitación de interés (vacío = todos)</label>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:6px;">${tiposHtml}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label style="display:block;font-size:11px;color:#64748b;margin-bottom:4px;">Monto mínimo (CLP)</label>
+          <input id="pf-monto-min" type="number" min="0" value="${p.monto_minimo ?? ""}" style="width:100%;height:36px;padding:0 10px;background:rgba(0,0,0,0.35);border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px;" />
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;color:#64748b;margin-bottom:4px;">Monto máximo (CLP)</label>
+          <input id="pf-monto-max" type="number" min="0" value="${p.monto_maximo ?? ""}" style="width:100%;height:36px;padding:0 10px;background:rgba(0,0,0,0.35);border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px;" />
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label style="display:block;font-size:11px;color:#64748b;margin-bottom:4px;">Frecuencia de alerta</label>
+          <select id="pf-frecuencia" style="width:100%;height:36px;padding:0 10px;background:rgba(0,0,0,0.35);border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px;">
+            <option value="diaria" ${p.frecuencia_alerta !== "semanal" ? "selected" : ""}>Diaria</option>
+            <option value="semanal" ${p.frecuencia_alerta === "semanal" ? "selected" : ""}>Semanal</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;color:#64748b;margin-bottom:4px;">Fit mínimo para alertar</label>
+          <select id="pf-fit" style="width:100%;height:36px;padding:0 10px;background:rgba(0,0,0,0.35);border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:13px;">
+            <option value="alto" ${p.fit_minimo === "alto" ? "selected" : ""}>Solo Alto</option>
+            <option value="medio" ${!p.fit_minimo || p.fit_minimo === "medio" ? "selected" : ""}>Medio o Alto</option>
+            <option value="bajo" ${p.fit_minimo === "bajo" ? "selected" : ""}>Cualquiera</option>
+          </select>
+        </div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#cbd5e1;">
+        <input id="pf-activo" type="checkbox" ${p.activo !== false ? "checked" : ""} />
+        Alertas activas
+      </label>
+      <div id="pf-msg" style="font-size:12px;min-height:16px;"></div>
+      <button id="pf-guardar" style="background:linear-gradient(135deg,#00D4FF,#00b8e6);color:#020617;font-weight:700;border:none;border-radius:8px;padding:11px;font-size:13px;cursor:pointer;">Guardar perfil</button>
+    </div>
+  `;
+
+  document.getElementById("pf-guardar").addEventListener("click", guardarPerfil);
+}
+
+async function guardarPerfil() {
+  const btn = document.getElementById("pf-guardar");
+  const msg = document.getElementById("pf-msg");
+  btn.disabled = true;
+  btn.textContent = "Guardando…";
+  msg.textContent = "";
+  msg.style.color = "";
+
+  const payload = {
+    nombre_empresa: document.getElementById("pf-nombre-empresa").value,
+    rubro: document.getElementById("pf-rubro").value,
+    descripcion_negocio: document.getElementById("pf-descripcion").value,
+    palabras_clave: document.getElementById("pf-keywords").value.split(",").map((s) => s.trim()).filter(Boolean),
+    regiones: Array.from(document.querySelectorAll(".pf-region:checked")).map((el) => Number(el.value)),
+    tipos_licitacion: Array.from(document.querySelectorAll(".pf-tipo:checked")).map((el) => el.value),
+    monto_minimo: document.getElementById("pf-monto-min").value,
+    monto_maximo: document.getElementById("pf-monto-max").value,
+    frecuencia_alerta: document.getElementById("pf-frecuencia").value,
+    fit_minimo: document.getElementById("pf-fit").value,
+    activo: document.getElementById("pf-activo").checked,
+  };
+
+  try {
+    const res = await fetch("/api/perfil-negocio", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-shellti-token": getShelltiToken() },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+    msg.style.color = "#34D399";
+    msg.textContent = "Perfil guardado correctamente.";
+    btn.textContent = "Guardar perfil";
+    btn.disabled = false;
+  } catch (err) {
+    msg.style.color = "#fc814a";
+    msg.textContent = err.message;
+    btn.textContent = "Guardar perfil";
+    btn.disabled = false;
+  }
 }

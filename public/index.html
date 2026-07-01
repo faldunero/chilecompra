@@ -75,9 +75,14 @@
           <span class="brand-sub">Explorador Mercado Público</span>
         </div>
       </div>
-      <div class="header-status" id="health-badge">
-        <span class="dot dot-gray"></span>
-        <span>Sistema…</span>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button id="btn-perfil" style="background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.3);color:#00D4FF;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;">
+          Mi perfil de negocio
+        </button>
+        <div class="header-status" id="health-badge">
+          <span class="dot dot-gray"></span>
+          <span>Sistema…</span>
+        </div>
       </div>
     </div>
   </header>
@@ -306,6 +311,15 @@
     <div id="detalle-modal" style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;position:relative;">
       <button id="detalle-cerrar" aria-label="Cerrar" style="position:absolute;top:16px;right:16px;background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;line-height:1;">✕</button>
       <div id="detalle-contenido"></div>
+    </div>
+  </div>
+
+  <div id="perfil-overlay" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.75);align-items:center;justify-content:center;z-index:1000;padding:24px;">
+    <div id="perfil-modal" style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;max-width:560px;width:100%;max-height:88vh;overflow-y:auto;padding:24px;position:relative;">
+      <button id="perfil-cerrar" aria-label="Cerrar" style="position:absolute;top:16px;right:16px;background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;line-height:1;">✕</button>
+      <h2 style="font-size:18px;color:#e2e8f0;margin:0 0 4px;">Mi perfil de negocio</h2>
+      <p style="font-size:12px;color:#64748b;margin:0 0 20px;">Esta información define qué licitaciones te vamos a destacar como oportunidades.</p>
+      <div id="perfil-contenido">Cargando…</div>
     </div>
   </div>
 

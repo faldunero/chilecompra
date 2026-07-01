@@ -1,6 +1,10 @@
 let allResults = [];
 let currentTab = "fecha";
-const edicionParams = { tipo: "", estado: "", keyword: "", region: "" };
+const edicionParams = { tipo: "", estado: "", keyword: "", region: "", cierreDesde: "", cierreHasta: "" };
+
+let resultadosFiltrados = [];
+let paginaActual = 1;
+const RESULTADOS_POR_PAGINA = 25;
 
 // Mapa código de región (valor del <select id="ep-region">) → palabra clave que
 // debe aparecer dentro de Organismo.RegionUnidad (texto libre que entrega la API,
@@ -103,6 +107,8 @@ document.addEventListener("DOMContentLoaded", () => {
     edicionParams.estado  = document.getElementById("ep-estado").value;
     edicionParams.keyword = document.getElementById("ep-keyword").value.trim().toLowerCase();
     edicionParams.region  = document.getElementById("ep-region").value;
+    edicionParams.cierreDesde = document.getElementById("ep-cierre-desde").value;
+    edicionParams.cierreHasta = document.getElementById("ep-cierre-hasta").value;
     actualizarIndicadorEdicion();
     if (allResults.Listado) aplicarFiltros();
     document.querySelectorAll(".edicion-section-toggle").forEach((b) => {
@@ -117,7 +123,10 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("ep-estado").value = "";
     document.getElementById("ep-keyword").value = "";
     document.getElementById("ep-region").value = "";
+    document.getElementById("ep-cierre-desde").value = "";
+    document.getElementById("ep-cierre-hasta").value = "";
     edicionParams.tipo = edicionParams.estado = edicionParams.keyword = edicionParams.region = "";
+    edicionParams.cierreDesde = edicionParams.cierreHasta = "";
     actualizarIndicadorEdicion();
     if (allResults.Listado) aplicarFiltros();
   });
@@ -243,6 +252,9 @@ function aplicarFiltros() {
   const query = document.getElementById("filter-input").value.toLowerCase();
   const estadoToolbar = document.getElementById("filter-estado").value.toLowerCase();
 
+  const cierreDesde = edicionParams.cierreDesde ? new Date(edicionParams.cierreDesde + "T00:00:00") : null;
+  const cierreHasta = edicionParams.cierreHasta ? new Date(edicionParams.cierreHasta + "T23:59:59") : null;
+
   const filtradas = allResults.Listado.filter((l) => {
     const matchQuery = !query ||
       (l.Nombre || "").toLowerCase().includes(query) ||
@@ -254,9 +266,18 @@ function aplicarFiltros() {
     const matchKeyword = !edicionParams.keyword || (l.Nombre || "").toLowerCase().includes(edicionParams.keyword);
     const matchRegion  = !edicionParams.region  ||
       normalizarTexto(l.Organismo?.RegionUnidad).includes(REGION_KEYWORDS[edicionParams.region] || "\0");
-    return matchQuery && matchEstadoToolbar && matchTipo && matchEstado && matchKeyword && matchRegion;
+    const fechaCierreLic = l.FechaCierre ? new Date(l.FechaCierre) : null;
+    const matchCierre =
+      (!cierreDesde && !cierreHasta) ||
+      (fechaCierreLic && !isNaN(fechaCierreLic) &&
+        (!cierreDesde || fechaCierreLic >= cierreDesde) &&
+        (!cierreHasta || fechaCierreLic <= cierreHasta));
+    return matchQuery && matchEstadoToolbar && matchTipo && matchEstado && matchKeyword && matchRegion && matchCierre;
   });
-  renderLicitaciones(filtradas);
+
+  resultadosFiltrados = filtradas;
+  paginaActual = 1;
+  renderPagina();
 }
 
 // ── Stats ──
@@ -267,6 +288,39 @@ function renderStats(data) {
     list.filter((l) => (l.Estado || "").toLowerCase().includes("publicada")).length;
   const orgs = new Set(list.map((l) => l.Organismo?.CodigoOrganismo).filter(Boolean));
   document.getElementById("stat-organismos").textContent = orgs.size;
+}
+
+// ── Paginación ──
+function renderPagina() {
+  const totalPaginas = Math.max(1, Math.ceil(resultadosFiltrados.length / RESULTADOS_POR_PAGINA));
+  if (paginaActual > totalPaginas) paginaActual = totalPaginas;
+  if (paginaActual < 1) paginaActual = 1;
+
+  const inicio = (paginaActual - 1) * RESULTADOS_POR_PAGINA;
+  const pagina = resultadosFiltrados.slice(inicio, inicio + RESULTADOS_POR_PAGINA);
+
+  renderLicitaciones(pagina);
+  renderControlesPaginacion(totalPaginas);
+}
+
+function renderControlesPaginacion(totalPaginas) {
+  const cont = document.getElementById("paginacion");
+  if (!cont) return;
+  if (resultadosFiltrados.length === 0 || totalPaginas <= 1) {
+    cont.innerHTML = "";
+    return;
+  }
+  cont.innerHTML = `
+    <button id="pag-anterior" ${paginaActual === 1 ? "disabled" : ""} style="background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:6px 14px;cursor:${paginaActual === 1 ? "default" : "pointer"};opacity:${paginaActual === 1 ? "0.4" : "1"};">← Anterior</button>
+    <span style="color:#94a3b8;font-size:13px;">Página ${paginaActual} de ${totalPaginas} · ${resultadosFiltrados.length} resultados</span>
+    <button id="pag-siguiente" ${paginaActual === totalPaginas ? "disabled" : ""} style="background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:6px 14px;cursor:${paginaActual === totalPaginas ? "default" : "pointer"};opacity:${paginaActual === totalPaginas ? "0.4" : "1"};">Siguiente →</button>
+  `;
+  document.getElementById("pag-anterior")?.addEventListener("click", () => {
+    if (paginaActual > 1) { paginaActual--; renderPagina(); document.getElementById("results-container").scrollIntoView({ behavior: "smooth", block: "start" }); }
+  });
+  document.getElementById("pag-siguiente")?.addEventListener("click", () => {
+    if (paginaActual < totalPaginas) { paginaActual++; renderPagina(); document.getElementById("results-container").scrollIntoView({ behavior: "smooth", block: "start" }); }
+  });
 }
 
 // ── Render cards ──

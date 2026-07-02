@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target.id === "detalle-overlay") cerrarDetalle();
   });
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") { cerrarDetalle(); cerrarPerfil(); }
+    if (e.key === "Escape") { cerrarDetalle(); cerrarPerfil(); cerrarFallbackActivas(); }
   });
 
   // ── Modal de perfil de negocio ──
@@ -92,6 +92,18 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("perfil-cerrar").addEventListener("click", cerrarPerfil);
   document.getElementById("perfil-overlay").addEventListener("click", (e) => {
     if (e.target.id === "perfil-overlay") cerrarPerfil();
+  });
+
+  // ── Modal de fallback a "Activas ahora" ──
+  document.getElementById("fallback-cerrar").addEventListener("click", cerrarFallbackActivas);
+  document.getElementById("fallback-cerrar-2").addEventListener("click", cerrarFallbackActivas);
+  document.getElementById("fallback-overlay").addEventListener("click", (e) => {
+    if (e.target.id === "fallback-overlay") cerrarFallbackActivas();
+  });
+  document.getElementById("fallback-ver-activas").addEventListener("click", () => {
+    cerrarFallbackActivas();
+    switchTab("activas");
+    buscar();
   });
 
   // ── Barra Edición ──
@@ -221,6 +233,12 @@ async function buscar() {
     document.getElementById("stats-panel").hidden = true;
     document.getElementById("toolbar").hidden = true;
     document.getElementById("btn-analizar").hidden = true;
+
+    // Si falló específicamente la búsqueda por fecha con un error del lado
+    // de MercadoPublico (5xx), ofrecemos "Activas ahora" como alternativa.
+    if (currentTab === "fecha" && /Error de MercadoPublico|Falló la consulta del día/.test(err.message)) {
+      mostrarFallbackActivas();
+    }
   } finally {
     btn.disabled = false;
     btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L13 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Buscar licitaciones`;
@@ -513,6 +531,16 @@ async function abrirPerfil() {
 
 function cerrarPerfil() {
   document.getElementById("perfil-overlay").style.display = "none";
+}
+
+// ── Fallback a "Activas ahora" ──
+function mostrarFallbackActivas() {
+  document.getElementById("fallback-overlay").style.display = "flex";
+}
+
+function cerrarFallbackActivas() {
+  const overlay = document.getElementById("fallback-overlay");
+  if (overlay) overlay.style.display = "none";
 }
 
 function renderFormularioPerfil(perfil) {

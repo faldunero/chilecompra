@@ -158,7 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
 async function checkHealth() {
   const badge = document.getElementById("health-badge");
   try {
-    const res = await fetch("/api/health");
+    const res = await fetch("api/health");
     if (res.ok) {
       badge.innerHTML = `<span class="dot dot-green"></span><span>Sistema activo</span>`;
     } else throw new Error();
@@ -187,18 +187,18 @@ async function buscar() {
       const desde = document.getElementById("input-fecha-desde").value;
       const hasta = document.getElementById("input-fecha-hasta").value;
       if (!desde) throw new Error("Selecciona una fecha de inicio.");
-      url = `/api/licitaciones-fecha?fecha=${desde}`;
+      url = `api/licitaciones-fecha?fecha=${desde}`;
       if (hasta && hasta !== desde) url += `&hasta=${hasta}`;
     } else if (currentTab === "organismo") {
       const cod = document.getElementById("input-org").value.trim();
       if (!cod) throw new Error("Ingresa un código de organismo.");
-      url = `/api/licitaciones-organismo?codigo=${encodeURIComponent(cod)}`;
+      url = `api/licitaciones-organismo?codigo=${encodeURIComponent(cod)}`;
     } else if (currentTab === "activas") {
-      url = `/api/licitaciones-activas`;
+      url = `api/licitaciones-activas`;
     } else {
       const cod = document.getElementById("input-cod").value.trim();
       if (!cod) throw new Error("Ingresa un código de licitación.");
-      url = `/api/licitaciones-codigo?codigo=${encodeURIComponent(cod)}`;
+      url = `api/licitaciones-codigo?codigo=${encodeURIComponent(cod)}`;
     }
 
     const res = await fetch(url);
@@ -242,7 +242,7 @@ async function analizar() {
   aiPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
   try {
-    const res = await fetch("/api/analizar", {
+    const res = await fetch("api/analizar", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ licitaciones: allResults.Listado }),
@@ -442,7 +442,7 @@ async function abrirDetalle(codigo) {
   contenido.innerHTML = `<div class="loading-state"><div class="spinner"></div>Cargando detalle…</div>`;
 
   try {
-    const res = await fetch(`/api/licitaciones-codigo?codigo=${encodeURIComponent(codigo)}`);
+    const res = await fetch(`api/licitaciones-codigo?codigo=${encodeURIComponent(codigo)}`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
 
@@ -500,7 +500,7 @@ async function abrirPerfil() {
   contenido.innerHTML = `<div class="loading-state"><div class="spinner"></div>Cargando tu perfil…</div>`;
 
   try {
-    const res = await fetch("/api/perfil-negocio", {
+    const res = await fetch("api/perfil-negocio", {
       headers: { "x-shellti-token": getShelltiToken() },
     });
     const data = await res.json();
@@ -620,7 +620,7 @@ async function guardarPerfil() {
   };
 
   try {
-    const res = await fetch("/api/perfil-negocio", {
+    const res = await fetch("api/perfil-negocio", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-shellti-token": getShelltiToken() },
       body: JSON.stringify(payload),
